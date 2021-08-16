@@ -6,7 +6,7 @@ const port = process.env.PORT || 4001;
 const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
-server.listen(4001);
+server.listen(4016);
 app.use(cors()); // CORS 미들웨어 추가
 
 const io = socketIo(server, {
@@ -19,7 +19,7 @@ const io = socketIo(server, {
 const db = mysql.createPool({
   host: "localhost",
   user: "dureotkd",
-  password: "@slsksh33@",
+  password: "slsksh33",
   database: "native",
 });
 
@@ -46,6 +46,69 @@ app.get("/getUser", function (req, res) {
     if (!err) res.send(data);
     else res.send(err);
   });
+});
+
+app.get("/getInsertMsg", (req, res) => {
+  const msg = req.query.msg;
+  const roomSeq = req.query.roomSeq;
+  const sendUser = req.query.sendUser;
+  const receiveUser = req.query.receiveUser;
+  const isRead = req.query.isRead;
+  db.query(
+    `INSERT INTO chat VALUES('','${msg}','${roomSeq}',NOW(),'${sendUser}','${receiveUser}','${isRead}','','')`,
+    (err, data) => {
+      if (!err) res.send(data);
+      else res.send(err);
+    }
+  );
+});
+
+app.get("/getChatMsg", (req, res) => {
+  const room_seq = req.query.room_seq;
+  db.query(
+    ` 
+  SELECT 
+    a.* , b.title
+  FROM 
+    chat a , chat_room b
+  WHERE 
+    a.room_seq = b.seq
+  AND 
+    b.seq = ${room_seq}
+  ORDER BY a.reg_date ASC`,
+    (err, data) => {
+      if (!err) res.send(data);
+      else res.send(err);
+    }
+  );
+});
+
+app.get("/getChatRoom", (req, res) => {
+  const seq = req.query.seq;
+
+  db.query(
+    `
+  SELECT 
+    *
+  FROM (
+	  SELECT 
+      a.* , b.title , b.host_user , b.seq AS room_group
+    FROM 
+      chat a , chat_room b
+    WHERE 
+      a.room_seq = b.seq
+    AND (a.send_user = 2  OR a.receive_user = 2)
+    ORDER BY 
+      a.reg_date DESC
+    LIMIT 
+      18446744073709551615
+  ) AS msg_desc
+  GROUP BY room_group`,
+    (err, data) => {
+      if (!err) res.send(data);
+      else res.send(err);
+    }
+  );
 });
 
 io.on("connection", function (socket) {
