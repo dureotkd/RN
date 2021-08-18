@@ -6,7 +6,7 @@ const port = process.env.PORT || 4001;
 const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
-server.listen(4016);
+server.listen(4017);
 app.use(cors()); // CORS 미들웨어 추가
 
 const io = socketIo(server, {
@@ -48,6 +48,21 @@ app.get("/getUser", function (req, res) {
   });
 });
 
+app.get("/ReserveSuccessMsg", (req, res) => {
+  const msg = req.query.msg;
+  const roomSeq = req.query.roomSeq;
+  const sendUser = req.query.sendUser;
+  const receiveUser = req.query.receiveUser;
+  const imageUri = req.query.imageUri;
+  db.query(
+    `INSERT INTO chat VALUES('','${msg}','${roomSeq}',NOW(),'${sendUser}','${receiveUser}','N','','','${imageUri}')`,
+    (err, data) => {
+      if (!err) res.send(data);
+      else res.send(err);
+    }
+  );
+});
+
 app.get("/getInsertMsg", (req, res) => {
   const msg = req.query.msg;
   const roomSeq = req.query.roomSeq;
@@ -55,7 +70,7 @@ app.get("/getInsertMsg", (req, res) => {
   const receiveUser = req.query.receiveUser;
   const isRead = req.query.isRead;
   db.query(
-    `INSERT INTO chat VALUES('','${msg}','${roomSeq}',NOW(),'${sendUser}','${receiveUser}','${isRead}','','')`,
+    `INSERT INTO chat VALUES('','${msg}','${roomSeq}',NOW(),'${sendUser}','${receiveUser}','${isRead}','','','')`,
     (err, data) => {
       if (!err) res.send(data);
       else res.send(err);
